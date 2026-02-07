@@ -106,7 +106,7 @@ const handleTouchMove = (event) => {
 const setupCopy = () => {
   const button = document.querySelector(".copy-button");
   const feedback = document.querySelector(".copy-feedback");
-  const ip = "cosmic.online";
+  const ip = "cosmicsmp.online";
 
   const setFeedback = (text) => {
     feedback.textContent = text;
