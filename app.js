@@ -127,8 +127,8 @@ const setupCopy = () => {
     } catch (error) {
       fallbackCopy();
     }
-    setFeedback("Copied!");
-    window.setTimeout(() => setFeedback("Copy"), 1800);
+    setFeedback("copied!");
+    window.setTimeout(() => setFeedback("copy"), 1800);
   };
 
   button.addEventListener("click", copy);
