@@ -4,13 +4,13 @@ const ctx = canvas.getContext("2d");
 const state = {
   stars: [],
   mouse: { x: window.innerWidth / 2, y: window.innerHeight / 2 },
-  parallax: { x: 0, y: 0 },
   size: { width: window.innerWidth, height: window.innerHeight },
 };
 
 const STAR_COUNT = 160;
-const PARALLAX_INTENSITY = 0.035;
-const PARALLAX_EASE = 0.06;
+const AVOID_RADIUS = 140;
+const AVOID_STRENGTH = 2.4;
+const OFFSET_DAMPING = 0.92;
 
 const resizeCanvas = () => {
   state.size.width = window.innerWidth;
@@ -30,6 +30,8 @@ const createStars = () => {
     alpha: Math.random() * 0.6 + 0.25,
     driftX: Math.random() * 0.35 + 0.05,
     driftY: (Math.random() - 0.5) * 0.08,
+    offsetX: 0,
+    offsetY: 0,
   }));
 };
 
@@ -50,23 +52,30 @@ const drawBackground = () => {
   ctx.fillRect(0, 0, width, height);
 };
 
-const updateParallax = () => {
-  const { width, height } = state.size;
-  const targetX = -(state.mouse.x - width / 2) * PARALLAX_INTENSITY;
-  const targetY = -(state.mouse.y - height / 2) * PARALLAX_INTENSITY;
-  state.parallax.x += (targetX - state.parallax.x) * PARALLAX_EASE;
-  state.parallax.y += (targetY - state.parallax.y) * PARALLAX_EASE;
+const applyMouseAvoidance = (star) => {
+  const dx = star.x - state.mouse.x;
+  const dy = star.y - state.mouse.y;
+  const distance = Math.hypot(dx, dy);
+
+  if (distance < AVOID_RADIUS && distance > 0.001) {
+    const force = ((AVOID_RADIUS - distance) / AVOID_RADIUS) * AVOID_STRENGTH;
+    star.offsetX += (dx / distance) * force;
+    star.offsetY += (dy / distance) * force;
+  }
+
+  star.offsetX *= OFFSET_DAMPING;
+  star.offsetY *= OFFSET_DAMPING;
 };
 
 const render = () => {
   const { width, height } = state.size;
   ctx.clearRect(0, 0, width, height);
   drawBackground();
-  updateParallax();
 
   state.stars.forEach((star) => {
-    star.x += star.driftX + state.parallax.x * 0.02;
-    star.y += star.driftY + state.parallax.y * 0.02;
+    star.x += star.driftX;
+    star.y += star.driftY;
+    applyMouseAvoidance(star);
 
     if (star.x < -20) star.x = width + 20;
     if (star.x > width + 20) star.x = -20;
@@ -75,7 +84,7 @@ const render = () => {
 
     ctx.beginPath();
     ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
-    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+    ctx.arc(star.x + star.offsetX, star.y + star.offsetY, star.radius, 0, Math.PI * 2);
     ctx.fill();
   });
 
